@@ -24,7 +24,7 @@ DRAW_INIT {
 		tile_static_vertices, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct tile_static_vertex),
-		(GLvoid*)offsetof(struct tile_static_vertex, pos));
+		(GLvoid*)offsetof(struct tile_static_vertex, vertex_pos));
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(struct tile_static_vertex),
 		(GLvoid*)offsetof(struct tile_static_vertex, tex_coord));
@@ -32,17 +32,21 @@ DRAW_INIT {
 
 	glGenBuffers(1, &draw_data->tile_instance_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, draw_data->tile_instance_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(tile_instance_vertices),
+	glBufferData(GL_ARRAY_BUFFER, sizeof(tile_instances),
 		NULL, GL_DYNAMIC_DRAW);
 
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(struct tile_instance_vertex),
-		(GLvoid*)offsetof(struct tile_instance_vertex, sprite_bottom_left));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(struct tile_instance),
+		(GLvoid*)offsetof(struct tile_instance, pos));
 	glVertexAttribDivisor(2, 1);
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(struct tile_instance_vertex),
-		(GLvoid*)offsetof(struct tile_instance_vertex, sprite_extent));
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(struct tile_instance),
+		(GLvoid*)offsetof(struct tile_instance, sprite_bottom_left));
 	glVertexAttribDivisor(3, 1);
 	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(struct tile_instance),
+		(GLvoid*)offsetof(struct tile_instance, sprite_extent));
+	glVertexAttribDivisor(4, 1);
+	glEnableVertexAttribArray(4);
 
 	glBindVertexArray(0);
 
@@ -54,15 +58,14 @@ DRAW_INIT {
 		assets->textures[ASSET_TEXTURE_TILESET].width,
 		assets->textures[ASSET_TEXTURE_TILESET].height);
 
-	tile_instance_vertices[0].sprite_bottom_left.x = 0.0f;
-	tile_instance_vertices[0].sprite_bottom_left.y = 304.0f;
-	tile_instance_vertices[0].sprite_extent.x = 16.0f;
-	tile_instance_vertices[0].sprite_extent.y = 16.0f;
-
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	return FALSE;
+}
+
+DRAW_ADD_TILE {
+	tile_instances[draw_data->num_tiles_to_draw++] = *tile_data;
 }
 
 DRAW_FREE {
@@ -72,13 +75,15 @@ DRAW_FREE {
 	glDeleteProgram(draw_data->tile_program);
 }
 
-DRAW_TILE {
+DRAW_TILES {
 	glBindBuffer(GL_ARRAY_BUFFER, draw_data->tile_instance_buffer);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, 1*sizeof(struct tile_instance_vertex),
-		tile_instance_vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, 0,
+		draw_data->num_tiles_to_draw*sizeof(struct tile_instance),
+		tile_instances);
 	glUseProgram(draw_data->tile_program);
 	glBindVertexArray(draw_data->tile_vao);
-	glDrawArraysInstanced(GL_TRIANGLES, 0, ARRAY_LENGTH(tile_static_vertices), 1);
+	glDrawArraysInstanced(GL_TRIANGLES, 0, ARRAY_LENGTH(tile_static_vertices),
+		draw_data->num_tiles_to_draw);
 	glBindVertexArray(0);
 }
 
@@ -93,4 +98,8 @@ DRAW_SET_ZOOM {
 	glUseProgram(draw_data->tile_program);
 	GLint zoom_location = glGetUniformLocation(draw_data->tile_program, "zoom");
 	glUniform1f(zoom_location, zoom);
+}
+
+DRAW_RESET {
+	draw_data->num_tiles_to_draw = 0;
 }

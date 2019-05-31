@@ -2,10 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <SDL.h>
+#include <time.h>
 
 #include "gl_3_3.h"
 #include "assets.h"
 #include "draw.h"
+#include "anim.h"
+#include "map.h"
 
 // GLOBAL VARIABLES
 #define GL_FUNC(return_type, name, ...) return_type (*name)(__VA_ARGS__) = NULL;
@@ -15,6 +18,8 @@ GL_3_3_FUNCTIONS
 char *base_path = NULL;
 
 i32 main(i32 argc, char **argv) {
+	srand(time(NULL));
+
 	if (SDL_Init(SDL_INIT_EVERYTHING)) {
 		SDL_Log("Failed to init SDL: %s", SDL_GetError());
 		return EXIT_FAILURE;
@@ -88,6 +93,12 @@ GL_3_3_FUNCTIONS
 	draw_update_screen_res(&draw_data, SCREEN_WIDTH, SCREEN_HEIGHT);
 	draw_set_zoom(&draw_data, 2.0f);
 
+	struct anim_state anim_state;
+	struct map map;
+
+	map_generate(&map, 200, 200);
+	map_create_anim_state(&map, &anim_state);
+
 	glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 	while (1) {
 		SDL_Event e;
@@ -102,8 +113,12 @@ GL_3_3_FUNCTIONS
 				}
 			}
 		}
+		draw_reset(&draw_data);
+		f32 time = ((f32)SDL_GetTicks()) / 1000.0f;
+		draw_anim_state(&anim_state, &draw_data, time);
+
 		glClear(GL_COLOR_BUFFER_BIT);
-		draw_tile(&draw_data);
+		draw_tiles(&draw_data);
 		SDL_GL_SwapWindow(window);
 	}
 
@@ -112,3 +127,5 @@ GL_3_3_FUNCTIONS
 
 #include "assets.c"
 #include "draw.c"
+#include "anim.c"
+#include "map.c"
