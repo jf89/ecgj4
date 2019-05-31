@@ -1,0 +1,5 @@
+.vimsession
+*.swp
+bin/
+build/
+assets/*.bin
