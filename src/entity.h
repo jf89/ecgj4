@@ -38,10 +38,23 @@ ENTITIES
 
 #define NO_ENTITY UINT32_MAX
 
+struct command {
+	enum {
+		COMMAND_NONE,
+		COMMAND_MOVE,
+	} type;
+	union {
+		struct {
+			u32 dijkstra_map;
+		} move;
+	};
+};
+
 struct entity {
 	enum entity_type type;
 	u32 id;
 	v2_u8 pos;
+	struct command cur_command;
 };
 
 u16 entity_sprite_index[] = {

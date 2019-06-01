@@ -12,6 +12,7 @@
 #include "map.h"
 #include "entity.h"
 #include "game_state.h"
+#include "path.h"
 
 // GLOBAL VARIABLES
 #define GL_FUNC(return_type, name, ...) return_type (*name)(__VA_ARGS__) = NULL;
@@ -19,6 +20,9 @@ GL_3_3_FUNCTIONS
 #undef GL_FUNC
 
 char *base_path = NULL;
+
+// Too big for the stack
+struct dijkstra_maps dijkstra_maps;
 
 i32 main(i32 argc, char **argv) {
 	srand(time(NULL));
@@ -104,6 +108,7 @@ GL_3_3_FUNCTIONS
 	f32 zoom = 2.0f;
 	v2 map_center = { .x = 0.0f, .y = 0.0f };
 
+	// add troops to map
 	{
 		bool is_blocked(v2_u8 pos, v2_u8 dim) {
 			for (u32 y = pos.y; y < pos.y + dim.h; ++y) {
@@ -206,6 +211,28 @@ GL_3_3_FUNCTIONS
 						selected_entities.num_selected_entities = 0;
 					}
 					break;
+				case SDL_BUTTON_RIGHT:
+					if (selected_entities.num_selected_entities) {
+						u32 dm_idx = get_free_dijkstra_map(&dijkstra_maps);
+						dijkstra_maps.maps[dm_idx].objective = OBJECTIVE_PURSUE;
+						dijkstra_maps.maps[dm_idx].goal = (v2_u8) {
+							.x = (u8)mouse_world_pos.x,
+							.y = (u8)mouse_world_pos.y,
+						};
+						path_calculate(&dijkstra_maps.maps[dm_idx], &game_state);
+
+						for (u32 i = 0;
+						     i < selected_entities.num_selected_entities;
+						     ++i) {
+							struct entity *e = game_entity_by_id(&game_state,
+								selected_entities.selected_entities[i]);
+							e->cur_command.type = COMMAND_MOVE;
+							e->cur_command.move.dijkstra_map = dm_idx;
+							++dijkstra_maps.reference_counts[dm_idx];
+						}
+
+					}
+					break;
 				}
 				break;
 			case SDL_MOUSEBUTTONUP:
@@ -293,3 +320,4 @@ GL_3_3_FUNCTIONS
 #include "map.c"
 #include "entity.c"
 #include "game_state.c"
+#include "path.c"
