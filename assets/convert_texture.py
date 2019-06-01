@@ -3,7 +3,8 @@
 import struct
 from PIL import Image
 
-texture_file = 'tileset.png'
+# texture_file = 'tileset.png'
+texture_file = 'codepage437.png'
 
 input = Image.open(texture_file)
 
@@ -17,5 +18,6 @@ for y in range(height, 0, -1):
 		row.extend((r, g, b, a))
 	result += bytes(row)
 
-with open('tileset.bin', 'wb') as f:
+# with open('tileset.bin', 'wb') as f:
+with open('codepage437.bin', 'wb') as f:
 	f.write(result)

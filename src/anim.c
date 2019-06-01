@@ -26,4 +26,14 @@ DRAW_ANIM_STATE {
 		tile.sprite_extent      = sprite_rects[p->sprite].extent;
 		draw_add_tile(draw_data, &tile);
 	}
+
+	for (u32 i = 0; i < anim_state->num_entity_anims; ++i) {
+		struct entity_anim *p = &anim_state->entity_anims[i];
+		/* switch (p->type) {
+		} */
+		tile.pos = p->pos;
+		tile.sprite_bottom_left = sprite_rects[p->sprite].bottom_left;
+		tile.sprite_extent      = sprite_rects[p->sprite].extent;
+		draw_add_tile(draw_data, &tile);
+	}
 }

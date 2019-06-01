@@ -24,13 +24,13 @@ typedef u8 bool;
 
 #define V(type) \
 	typedef struct { \
-		union { type x; type r; }; \
-		union { type y; type g; }; \
+		union { type x; type r; type w; }; \
+		union { type y; type g; type h; }; \
 	} v2_ ## type; \
 	typedef struct { \
-		union { type x; type r; }; \
-		union { type y; type g; }; \
-		union { type z; type b; }; \
+		union { type x; type r; type w; }; \
+		union { type y; type g; type h; }; \
+		union { type z; type b; type d; }; \
 	} v3_ ## type; \
 	typedef struct { \
 		union { type x; type r; }; \
@@ -79,6 +79,7 @@ typedef m4x3_f32 m4x3;
 #define MIN(x, y) ({ typeof(x) _x = (x); typeof(y) _y = (y); _x < _y ? _x : _y; })
 #define MAX(x, y) ({ typeof(x) _x = (x); typeof(y) _y = (y); _x > _y ? _x : _y; })
 #define CLAMP(v, min, max) MAX(min, MIN(max, v))
+#define SWAP(x, y) ({ typeof(x) tmp = x; x = y; y = tmp; })
 
 #ifdef DEBUG_DEFER
 #define DEFER__(num, block) \

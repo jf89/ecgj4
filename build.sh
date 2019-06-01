@@ -10,6 +10,8 @@ mkdir -p build
 
 glslangValidator assets/tile.vert
 glslangValidator assets/tile.frag
+glslangValidator assets/font.vert
+glslangValidator assets/font.frag
 
 gcc $CFLAGS src/asset_builder.c -o asset_builder $LIBS
 ./asset_builder

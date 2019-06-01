@@ -12,6 +12,8 @@ struct asset_shader {
 	/* begin shader list */ \
 	SHADER(TILE_VERT, GL_VERTEX_SHADER,   "tile.vert") \
 	SHADER(TILE_FRAG, GL_FRAGMENT_SHADER, "tile.frag") \
+	SHADER(FONT_VERT, GL_VERTEX_SHADER,   "font.vert") \
+	SHADER(FONT_FRAG, GL_FRAGMENT_SHADER, "font.frag") \
 	/* end shader list */
 
 enum asset_shaders {
@@ -31,7 +33,8 @@ struct asset_texture {
 
 #define TEXTURES \
 	/* begin texture list */ \
-	TEXTURE(TILESET, "tileset.bin") \
+	TEXTURE(TILESET,    "tileset.bin") \
+	TEXTURE(CP437_FONT, "codepage437.bin") \
 	/* end texture list */
 
 enum asset_textures {

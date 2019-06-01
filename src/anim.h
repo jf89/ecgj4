@@ -69,6 +69,30 @@
 	SPRITE(WATER_4,          304.0f, 256.0f, 16.0f, 16.0f) \
 	SPRITE(WATER_5,          304.0f, 240.0f, 16.0f, 16.0f) \
 	SPRITE(WATER_6,          304.0f, 224.0f, 16.0f, 16.0f) \
+	SPRITE(GOBLIN,             0.0f,  48.0f, 16.0f, 16.0f) \
+	SPRITE(SKELETON,          16.0f,  48.0f, 16.0f, 16.0f) \
+	SPRITE(CYCLOPS,           32.0f,  48.0f, 32.0f, 16.0f) \
+	SPRITE(SNAKE,             64.0f,  48.0f, 32.0f, 16.0f) \
+	SPRITE(SLIME,             96.0f,  48.0f, 16.0f, 16.0f) \
+	SPRITE(BAT,              112.0f,  48.0f, 16.0f, 16.0f) \
+	SPRITE(MAN,                0.0f,  64.0f, 16.0f, 16.0f) \
+	SPRITE(WOMAN,             16.0f,  64.0f, 16.0f, 16.0f) \
+	SPRITE(KNIGHT,            32.0f,  64.0f, 16.0f, 16.0f) \
+	SPRITE(WITCH,            112.0f,  64.0f, 16.0f, 32.0f) \
+	SPRITE(PRIEST,           144.0f,  64.0f, 16.0f, 16.0f) \
+	SPRITE(NECROMANCER,      160.0f,  64.0f, 16.0f, 16.0f) \
+	SPRITE(FORT,              48.0f, 144.0f, 32.0f, 32.0f) \
+	SPRITE(TOWER,             80.0f, 144.0f, 16.0f, 32.0f) \
+	SPRITE(SMALL_HOUSE,       96.0f, 144.0f, 16.0f, 16.0f) \
+	SPRITE(BIG_HOUSE,         96.0f, 160.0f, 16.0f, 16.0f) \
+	SPRITE(WELL,             112.0f, 144.0f, 16.0f, 16.0f) \
+	SPRITE(SMALL_FOUNTAIN,    80.0f, 176.0f, 16.0f, 16.0f) \
+	SPRITE(BIG_FOUNTAIN,      96.0f, 176.0f, 16.0f, 16.0f) \
+	SPRITE(TEMPLE,           112.0f, 176.0f, 16.0f, 16.0f) \
+	SPRITE(WINDMILL,          80.0f, 192.0f, 16.0f, 32.0f) \
+	SPRITE(STATUE,            96.0f, 192.0f, 16.0f, 32.0f) \
+	SPRITE(ARENA,            272.0f,  96.0f, 32.0f, 32.0f) \
+	SPRITE(DARK_FORT,         48.0f, 176.0f, 48.0f, 48.0f) \
 	/* end sprite list */
 
 enum sprite {
@@ -86,7 +110,7 @@ struct sprite_rect {
 
 struct sprite_rect sprite_rects[] = {
 #define SPRITE(_name, left, bottom, width, height) \
-	{ .bottom_left = { .x = left, .y = bottom }, .extent = { .x = width, .y = height } },
+	{ .bottom_left = { .x = left, .y = bottom }, .extent = { .w = width, .h = height } },
 SPRITES
 #undef SPRITE
 };
@@ -101,11 +125,29 @@ struct ground_anim {
 	f32 next_change_time;
 };
 
-#define MAX_WATER_ANIMS (256*256)
+#define MAX_GROUND_ANIMS (256*256)
+
+struct entity_anim {
+	enum {
+		ENTITY_ANIM_NONE,
+		ENTITY_ANIM_BOBBING,
+	} type;
+	enum sprite sprite;
+	v2 pos;
+	union {
+		struct {
+			f32 time;
+		} bobbing;
+	};
+};
+
+#define MAX_ENTITY_ANIMS (256*256)
 
 struct anim_state {
 	u32 num_ground_anims;
-	struct ground_anim ground_anims[MAX_WATER_ANIMS];
+	struct ground_anim ground_anims[MAX_GROUND_ANIMS];
+	u32 num_entity_anims;
+	struct entity_anim entity_anims[MAX_ENTITY_ANIMS];
 };
 
 #define DRAW_ANIM_STATE \
