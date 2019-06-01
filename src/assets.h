@@ -14,6 +14,8 @@ struct asset_shader {
 	SHADER(TILE_FRAG, GL_FRAGMENT_SHADER, "tile.frag") \
 	SHADER(FONT_VERT, GL_VERTEX_SHADER,   "font.vert") \
 	SHADER(FONT_FRAG, GL_FRAGMENT_SHADER, "font.frag") \
+	SHADER(LINE_VERT, GL_VERTEX_SHADER,   "line.vert") \
+	SHADER(LINE_FRAG, GL_FRAGMENT_SHADER, "line.frag") \
 	/* end shader list */
 
 enum asset_shaders {

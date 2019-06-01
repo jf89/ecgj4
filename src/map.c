@@ -193,26 +193,34 @@ MAP_CREATE_ANIM_STATE {
 						++p; ++anim_state->num_ground_anims;
 						p->pos.x = (f32)i; p->pos.y = (f32)j;
 						p->type = GROUND_ANIM_NONE;
-						p->sprite = SPRITE_SAND_T_EMPTY_1;
-						// p->sprite = SPRITE_SAND_T_EMPTY_2;
+						switch (rand() % 2) {
+						case 0: p->sprite = SPRITE_SAND_T_EMPTY_1; break;
+						case 1: p->sprite = SPRITE_SAND_T_EMPTY_2; break;
+						}
 					} else if (south == GROUND_TYPE_WATER) {
 						++p; ++anim_state->num_ground_anims;
 						p->pos.x = (f32)i; p->pos.y = (f32)j;
 						p->type = GROUND_ANIM_NONE;
-						p->sprite = SPRITE_SAND_B_EMPTY_1;
-						// p->sprite = SPRITE_SAND_B_EMPTY_2;
+						switch (rand() % 2) {
+						case 0: p->sprite = SPRITE_SAND_B_EMPTY_1; break;
+						case 1: p->sprite = SPRITE_SAND_B_EMPTY_2; break;
+						}
 					} else if (east == GROUND_TYPE_WATER) {
 						++p; ++anim_state->num_ground_anims;
 						p->pos.x = (f32)i; p->pos.y = (f32)j;
 						p->type = GROUND_ANIM_NONE;
-						p->sprite = SPRITE_SAND_R_EMPTY_1;
-						// p->sprite = SPRITE_SAND_R_EMPTY_2;
+						switch (rand() % 2) {
+						case 0: p->sprite = SPRITE_SAND_R_EMPTY_1; break;
+						case 1: p->sprite = SPRITE_SAND_R_EMPTY_2; break;
+						}
 					} else if (west == GROUND_TYPE_WATER) {
 						++p; ++anim_state->num_ground_anims;
 						p->pos.x = (f32)i; p->pos.y = (f32)j;
 						p->type = GROUND_ANIM_NONE;
-						p->sprite = SPRITE_SAND_L_EMPTY_1;
-						// p->sprite = SPRITE_SAND_L_EMPTY_2;
+						switch (rand() % 2) {
+						case 0: p->sprite = SPRITE_SAND_L_EMPTY_1; break;
+						case 1: p->sprite = SPRITE_SAND_L_EMPTY_2; break;
+						}
 					} else if (ne == GROUND_TYPE_WATER) {
 						++p; ++anim_state->num_ground_anims;
 						p->pos.x = (f32)i; p->pos.y = (f32)j;
@@ -235,13 +243,15 @@ MAP_CREATE_ANIM_STATE {
 						p->sprite = SPRITE_SAND_BL_EMPTY;
 					} else {
 						p->type = GROUND_ANIM_NONE;
-						p->sprite = SPRITE_SAND_FULL_1;
-						// p->sprite = SPRITE_SAND_FULL_2;
-						// p->sprite = SPRITE_SAND_FULL_3;
-						// p->sprite = SPRITE_SAND_RARE_1;
-						// p->sprite = SPRITE_SAND_RARE_2;
-						// p->sprite = SPRITE_SAND_RARE_3;
-						// p->sprite = SPRITE_SAND_RARE_4;
+						switch (rand() % 19) {
+						case  0: case  1: case  2: case  3: case  4: p->sprite = SPRITE_SAND_FULL_1; break;
+						case  5: case  6: case  7: case  8: case  9: p->sprite = SPRITE_SAND_FULL_2; break;
+						case 10: case 11: case 12: case 13: case 14: p->sprite = SPRITE_SAND_FULL_3; break;
+						case 15: p->sprite = SPRITE_SAND_FULL_RARE_1; break;
+						case 16: p->sprite = SPRITE_SAND_FULL_RARE_2; break;
+						case 17: p->sprite = SPRITE_SAND_FULL_RARE_3; break;
+						case 18: p->sprite = SPRITE_SAND_FULL_RARE_4; break;
+						}
 					}
 				} break;
 			case GROUND_TYPE_GRASS:

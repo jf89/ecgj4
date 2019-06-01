@@ -12,6 +12,8 @@ glslangValidator assets/tile.vert
 glslangValidator assets/tile.frag
 glslangValidator assets/font.vert
 glslangValidator assets/font.frag
+glslangValidator assets/line.vert
+glslangValidator assets/line.frag
 
 gcc $CFLAGS src/asset_builder.c -o asset_builder $LIBS
 ./asset_builder

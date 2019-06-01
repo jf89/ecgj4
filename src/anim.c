@@ -29,9 +29,14 @@ DRAW_ANIM_STATE {
 
 	for (u32 i = 0; i < anim_state->num_entity_anims; ++i) {
 		struct entity_anim *p = &anim_state->entity_anims[i];
-		/* switch (p->type) {
-		} */
-		tile.pos = p->pos;
+		v2 pos = p->pos;
+		switch (p->type) {
+		case ENTITY_ANIM_NONE:
+			break;
+		case ENTITY_ANIM_BOBBING:
+			break;
+		}
+		tile.pos = pos;
 		tile.sprite_bottom_left = sprite_rects[p->sprite].bottom_left;
 		tile.sprite_extent      = sprite_rects[p->sprite].extent;
 		draw_add_tile(draw_data, &tile);

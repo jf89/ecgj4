@@ -163,7 +163,24 @@ GL_3_3_FUNCTIONS
 	}
 
 	glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
+
+#define MAX_SELECTED_ENTITIES 16
+	struct  {
+		u32 num_selected_entities;
+		u32 selected_entities[MAX_SELECTED_ENTITIES];
+	} selected_entities;
+	selected_entities.num_selected_entities = 0;
+
 	while (1) {
+		v2_i32 screen_size = { .w = SCREEN_WIDTH, .h = SCREEN_HEIGHT };
+		v2_i32 mouse_screen_pos;
+		SDL_GetMouseState(&mouse_screen_pos.x, &mouse_screen_pos.y);
+		v2 mouse_world_pos = {
+			.x = (mouse_screen_pos.x - screen_size.w/2)     / (zoom * 16.0f) + map_center.x,
+			.y = (screen_size.h/2 - mouse_screen_pos.y - 1) / (zoom * 16.0f) + map_center.y,
+		};
+		u32 mouse_over_entity = game_get_entity_by_mouse(&game_state, mouse_world_pos);
+
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
 			switch (e.type) {
@@ -175,6 +192,29 @@ GL_3_3_FUNCTIONS
 					return EXIT_SUCCESS;
 				}
 				break;
+			case SDL_MOUSEBUTTONDOWN:
+				switch (e.button.button) {
+				case SDL_BUTTON_MIDDLE:
+					SDL_SetRelativeMouseMode(SDL_TRUE);
+					break;
+				case SDL_BUTTON_LEFT:
+					if (mouse_over_entity != NO_ENTITY) {
+						selected_entities.num_selected_entities = 1;
+						selected_entities.selected_entities[0]
+							= mouse_over_entity;
+					} else {
+						selected_entities.num_selected_entities = 0;
+					}
+					break;
+				}
+				break;
+			case SDL_MOUSEBUTTONUP:
+				switch (e.button.button) {
+				case SDL_BUTTON_MIDDLE:
+					SDL_SetRelativeMouseMode(SDL_FALSE);
+					break;
+				}
+				break;
 			case SDL_MOUSEMOTION:
 				if (e.motion.state & SDL_BUTTON_MMASK) {
 					map_center.x -= ((f32)e.motion.xrel) / (zoom * 16.0f);
@@ -183,24 +223,63 @@ GL_3_3_FUNCTIONS
 				break;
 			case SDL_MOUSEWHEEL:
 				#define WHEEL_SCALE_FACTOR 10.0f
-				zoom += ((f32)e.wheel.y) / WHEEL_SCALE_FACTOR;
+				if (e.wheel.y > 0) {
+					zoom = MIN(zoom + 1.0f, 4.0f);
+				} else {
+					zoom = MAX(zoom - 1.0f, 1.0f);
+				}
 				break;
 			}
 		}
+		map_center.x = CLAMP(map_center.x,
+			screen_size.w / (2.0f * zoom * 16.0f),
+			game_state.map.width - screen_size.w / (2.0f * zoom * 16.0f));
+		map_center.y = CLAMP(map_center.y,
+			screen_size.h / (2.0f * zoom * 16.0f),
+			game_state.map.width - screen_size.h / (2.0f * zoom * 16.0f));
 		draw_reset(&draw_data);
 		draw_set_zoom(&draw_data, zoom);
 		draw_update_map_center(&draw_data, map_center);
+
 		f32 time = ((f32)SDL_GetTicks()) / 1000.0f;
 		draw_anim_state(&anim_state, &draw_data, time);
-		draw_add_string(&draw_data, "Hello, world!",
-			(v2){ .x = 0.0f, .y = 0.0f },
-			(v3){ .r = 1.0f, .g = 0.0f, .b = 0.0f });
-		draw_add_string(&draw_data, "Hello, world!",
-			(v2){ .x = 0.0f, .y = 1.0f },
-			(v3){ .r = 0.0f, .g = 1.0f, .b = 1.0f });
+
+		if (mouse_over_entity != NO_ENTITY) {
+			struct entity *e = game_entity_by_id(&game_state, mouse_over_entity);
+			v2_u8 dim = entity_dimensions[e->type];
+			v2_u8 pos = e->pos;
+			v2 bl = { .x =         pos.x, .y =         pos.y };
+			v2 br = { .x = pos.x + dim.w, .y =         pos.y };
+			v2 tl = { .x =         pos.x, .y = pos.y + dim.h };
+			v2 tr = { .x = pos.x + dim.w, .y = pos.y + dim.h };
+			v3 color = { .r = 0.0f, .g = 1.0f, .b = 1.0f };
+			draw_add_line(&draw_data, bl, br, color);
+			draw_add_line(&draw_data, br, tr, color);
+			draw_add_line(&draw_data, tr, tl, color);
+			draw_add_line(&draw_data, tl, bl, color);
+		}
+
+		if (selected_entities.num_selected_entities) {
+			for (u32 i = 0; i < selected_entities.num_selected_entities; ++i) {
+				u32 id = selected_entities.selected_entities[i];
+				struct entity *e = game_entity_by_id(&game_state, id);
+				v2_u8 dim = entity_dimensions[e->type];
+				v2_u8 pos = e->pos;
+				v2 bl = { .x =         pos.x, .y =         pos.y };
+				v2 br = { .x = pos.x + dim.w, .y =         pos.y };
+				v2 tl = { .x =         pos.x, .y = pos.y + dim.h };
+				v2 tr = { .x = pos.x + dim.w, .y = pos.y + dim.h };
+				v3 color = { .r = 0.0f, .g = 1.0f, .b = 0.0f };
+				draw_add_line(&draw_data, bl, br, color);
+				draw_add_line(&draw_data, br, tr, color);
+				draw_add_line(&draw_data, tr, tl, color);
+				draw_add_line(&draw_data, tl, bl, color);
+			}
+		}
 
 		glClear(GL_COLOR_BUFFER_BIT);
 		draw_tiles(&draw_data);
+		draw_lines(&draw_data);
 		draw_text(&draw_data);
 		SDL_GL_SwapWindow(window);
 	}

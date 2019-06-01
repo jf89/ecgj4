@@ -12,6 +12,11 @@ struct draw_data {
 	GLuint font_static_buffer;
 	GLuint font_instance_buffer;
 	u32 num_chars_to_draw;
+
+	GLuint line_program;
+	GLuint line_vao;
+	GLuint line_buffer;
+	u32 num_lines_to_draw;
 };
 
 struct tile_static_vertex {
@@ -61,6 +66,15 @@ struct font_instance {
 	v3 color;
 };
 
+#define MAX_LINES 1024
+
+struct line_vertex {
+	v2 pos;
+	v3 color;
+};
+
+struct line_vertex line_vertices[2*MAX_LINES] = { 0 };
+
 #define MAX_FONT_INSTANCES (10*1024)
 
 struct font_instance font_instances[MAX_FONT_INSTANCES] = { 0 };
@@ -99,3 +113,9 @@ DRAW_SET_ZOOM;
 
 #define DRAW_TEXT void draw_text(struct draw_data *draw_data)
 DRAW_TEXT;
+
+#define DRAW_LINES void draw_lines(struct draw_data *draw_data)
+DRAW_LINES;
+
+#define DRAW_ADD_LINE void draw_add_line(struct draw_data *draw_data, v2 start, v2 end, v3 color)
+DRAW_ADD_LINE;

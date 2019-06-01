@@ -36,9 +36,11 @@ ENTITIES
 	NUM_ENTITY_TYPES,
 };
 
+#define NO_ENTITY UINT32_MAX
+
 struct entity {
 	enum entity_type type;
-	// u32 id;
+	u32 id;
 	v2_u8 pos;
 };
 
@@ -50,6 +52,12 @@ ENTITIES
 
 v2_u8 entity_dimensions[] = {
 #define ENTITY(_name, width, height) { .w = width, .h = height },
+ENTITIES
+#undef ENTITY
+};
+
+char *entity_type_name[] = {
+#define ENTITY(name, _width, _height) #name ,
 ENTITIES
 #undef ENTITY
 };

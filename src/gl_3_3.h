@@ -59,6 +59,7 @@ typedef i32 GLintptr;
 #define GL_4_BYTES        0x1409
 #define GL_DOUBLE         0x140A
 
+#define GL_LINES     0x0001
 #define GL_TRIANGLES 0x0004
 
 #define GL_BLEND               0x0BE2

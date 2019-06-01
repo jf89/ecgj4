@@ -111,6 +111,35 @@ DRAW_INIT {
 
 	glBindVertexArray(0);
 
+	draw_data->line_program = glCreateProgram();
+	if (draw_data->line_program == 0) {
+		SDL_Log("Failed to create OpenGL line program.");
+		return TRUE;
+	}
+	glAttachShader(draw_data->line_program, assets->shaders[ASSET_SHADER_LINE_VERT].shader);
+	glAttachShader(draw_data->line_program, assets->shaders[ASSET_SHADER_LINE_FRAG].shader);
+	glLinkProgram(draw_data->line_program);
+
+	glGetProgramiv(draw_data->line_program, GL_LINK_STATUS, &link_status);
+	if (link_status == GL_FALSE) {
+		SDL_Log("Failed to link line program.");
+		return FALSE;
+	}
+
+	glGenVertexArrays(1, &draw_data->line_vao);
+	glBindVertexArray(draw_data->line_vao);
+
+	glGenBuffers(1, &draw_data->line_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, draw_data->line_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(line_vertices), NULL, GL_DYNAMIC_DRAW);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct line_vertex),
+		(GLvoid*)offsetof(struct line_vertex, pos));
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(struct line_vertex),
+		(GLvoid*)offsetof(struct line_vertex, color));
+	glEnableVertexAttribArray(1);
+
 	glEnable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -168,17 +197,26 @@ DRAW_UPDATE_SCREEN_RES {
 	glUseProgram(draw_data->font_program);
 	screen_resolution_location = glGetUniformLocation(draw_data->font_program, "screen_resolution");
 	glUniform2f(screen_resolution_location, width, height);
+
+	glUseProgram(draw_data->line_program);
+	screen_resolution_location = glGetUniformLocation(draw_data->line_program, "screen_resolution");
+	glUniform2f(screen_resolution_location, width, height);
 }
 
 DRAW_SET_ZOOM {
 	glUseProgram(draw_data->tile_program);
 	GLint zoom_location = glGetUniformLocation(draw_data->tile_program, "zoom");
 	glUniform1f(zoom_location, zoom);
+
+	glUseProgram(draw_data->line_program);
+	zoom_location = glGetUniformLocation(draw_data->line_program, "zoom");
+	glUniform1f(zoom_location, zoom);
 }
 
 DRAW_RESET {
 	draw_data->num_tiles_to_draw = 0;
 	draw_data->num_chars_to_draw = 0;
+	draw_data->num_lines_to_draw = 0;
 }
 
 DRAW_TEXT {
@@ -197,4 +235,28 @@ DRAW_UPDATE_MAP_CENTER {
 	glUseProgram(draw_data->tile_program);
 	GLint center_location = glGetUniformLocation(draw_data->tile_program, "center");
 	glUniform2f(center_location, center.x, center.y);
+
+	glUseProgram(draw_data->line_program);
+	center_location = glGetUniformLocation(draw_data->line_program, "center");
+	glUniform2f(center_location, center.x, center.y);
+}
+
+DRAW_LINES {
+	glBindBuffer(GL_ARRAY_BUFFER, draw_data->line_buffer);
+	glBufferSubData(GL_ARRAY_BUFFER, 0,
+		draw_data->num_lines_to_draw * sizeof(struct line_vertex), line_vertices);
+	glUseProgram(draw_data->line_program);
+	glBindVertexArray(draw_data->line_vao);
+	glDrawArrays(GL_LINES, 0, draw_data->num_lines_to_draw);
+}
+
+DRAW_ADD_LINE {
+	line_vertices[draw_data->num_lines_to_draw++] = (struct line_vertex) {
+		.pos = start,
+		.color = color,
+	};
+	line_vertices[draw_data->num_lines_to_draw++] = (struct line_vertex) {
+		.pos = end,
+		.color = color,
+	};
 }
