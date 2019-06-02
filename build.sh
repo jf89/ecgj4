@@ -3,7 +3,7 @@
 set -e
 
 LIBS="`sdl2-config --libs`"
-CFLAGS="`sdl2-config --cflags` -Wall -ggdb -I src -include prelude.h"
+CFLAGS="`sdl2-config --cflags` -Wall -Wno-switch -ggdb -I src -include prelude.h"
 
 mkdir -p bin
 mkdir -p build

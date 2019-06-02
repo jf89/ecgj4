@@ -277,9 +277,19 @@ MAP_CREATE_ANIM_STATE {
 }
 
 GAME_ADD_ENTITY {
-	u32 idx = game_state->num_entities++;
-	entity->id = game_state->next_entity_id++;
-	game_state->entities[idx] = *entity;
+	struct entity e = {
+		.type  = entity_type,
+		.flags = entity_flags[entity_type],
+		.id = game_state->next_entity_id++,
+		.pos = pos,
+		.state = (struct entity_state) {
+			.state = ENTITY_STATE_IDLE,
+		},
+		.cur_command = (struct command) {
+			.type = COMMAND_NONE,
+		},
+	};
+	game_state->entities[game_state->num_entities++] = e;
 }
 
 GAME_ENTITY_BY_ID {
@@ -320,7 +330,6 @@ GAME_UPDATE {
 							if (w == -1.0f) {
 								continue;
 							}
-							SDL_Log("%f", w);
 							if (w < best_weight) {
 								best_weight = w;
 								best_pos.x = x+dx;

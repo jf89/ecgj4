@@ -19,36 +19,36 @@ struct map {
 
 #define ENTITIES \
 	/* begin entity list */ \
-	ENTITY(GOBLIN,         1, 1) \
-	ENTITY(SKELETON,       1, 1) \
-	ENTITY(CYCLOPS,        2, 1) \
-	ENTITY(SNAKE,          2, 1) \
-	ENTITY(SLIME,          1, 1) \
-	ENTITY(BAT,            1, 1) \
-	ENTITY(MAN,            1, 1) \
-	ENTITY(WOMAN,          1, 1) \
-	ENTITY(KNIGHT,         1, 1) \
-	ENTITY(WITCH,          1, 1) \
-	ENTITY(PRIEST,         1, 1) \
-	ENTITY(NECROMANCER,    1, 1) \
-	ENTITY(FORT,           2, 2) \
-	ENTITY(TOWER,          1, 2) \
-	ENTITY(SMALL_HOUSE,    1, 1) \
-	ENTITY(BIG_HOUSE,      1, 1) \
-	ENTITY(WELL,           1, 1) \
-	ENTITY(SMALL_FOUNTAIN, 1, 1) \
-	ENTITY(BIG_FOUNTAIN,   1, 1) \
-	ENTITY(TEMPLE,         1, 1) \
-	ENTITY(WINDMILL,       1, 2) \
-	ENTITY(STATUE,         1, 2) \
-	ENTITY(ARENA,          2, 2) \
-	ENTITY(DARK_FORT,      2, 3) \
+	ENTITY(GOBLIN,         1, 1, ENTITY_FLAG_MOVABLE) \
+	ENTITY(SKELETON,       1, 1, ENTITY_FLAG_MOVABLE) \
+	ENTITY(CYCLOPS,        2, 1, ENTITY_FLAG_MOVABLE) \
+	ENTITY(SNAKE,          2, 1, ENTITY_FLAG_MOVABLE) \
+	ENTITY(SLIME,          1, 1, ENTITY_FLAG_MOVABLE) \
+	ENTITY(BAT,            1, 1, ENTITY_FLAG_MOVABLE) \
+	ENTITY(MAN,            1, 1, ENTITY_FLAG_MOVABLE | ENTITY_FLAG_SELECTABLE) \
+	ENTITY(WOMAN,          1, 1, ENTITY_FLAG_MOVABLE | ENTITY_FLAG_SELECTABLE) \
+	ENTITY(KNIGHT,         1, 1, ENTITY_FLAG_MOVABLE | ENTITY_FLAG_SELECTABLE) \
+	ENTITY(WITCH,          1, 1, ENTITY_FLAG_MOVABLE | ENTITY_FLAG_SELECTABLE) \
+	ENTITY(PRIEST,         1, 1, ENTITY_FLAG_MOVABLE | ENTITY_FLAG_SELECTABLE) \
+	ENTITY(NECROMANCER,    1, 1, ENTITY_FLAG_MOVABLE) \
+	ENTITY(FORT,           2, 2, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(TOWER,          1, 2, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(SMALL_HOUSE,    1, 1, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(BIG_HOUSE,      1, 1, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(WELL,           1, 1, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(SMALL_FOUNTAIN, 1, 1, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(BIG_FOUNTAIN,   1, 1, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(TEMPLE,         1, 1, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(WINDMILL,       1, 2, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(STATUE,         1, 2, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(ARENA,          2, 2, ENTITY_FLAG_SELECTABLE) \
+	ENTITY(DARK_FORT,      2, 3, 0) \
 	/* end entity list */
 
 enum entity_type {
-#define ENTITY(name, _width, _height) ENTITY_TYPE_ ## name,
-ENTITIES
-#undef ENTITY
+	#define ENTITY(name, _width, _height, _flags) ENTITY_TYPE_ ## name,
+	ENTITIES
+	#undef ENTITY
 
 	NUM_ENTITY_TYPES,
 };
@@ -69,6 +69,11 @@ struct command {
 
 #define MOVE_TIME 0.25f
 
+enum entity_flags {
+	ENTITY_FLAG_SELECTABLE = (1 << 0),
+	ENTITY_FLAG_MOVABLE    = (1 << 1),
+};
+
 struct entity_state {
 	enum {
 		ENTITY_STATE_IDLE,
@@ -83,6 +88,7 @@ struct entity_state {
 
 struct entity {
 	enum entity_type type;
+	enum entity_flags flags;
 	u32 id;
 	v2_u8 pos;
 	struct entity_state state;
@@ -90,21 +96,27 @@ struct entity {
 };
 
 u16 entity_sprite_index[] = {
-#define ENTITY(name, _width, _height) SPRITE_ ## name,
-ENTITIES
-#undef ENTITY
+	#define ENTITY(name, _width, _height, _flags) SPRITE_ ## name,
+	ENTITIES
+	#undef ENTITY
 };
 
 v2_u8 entity_dimensions[] = {
-#define ENTITY(_name, width, height) { .w = width, .h = height },
-ENTITIES
-#undef ENTITY
+	#define ENTITY(_name, width, height, _flags) { .w = width, .h = height },
+	ENTITIES
+	#undef ENTITY
 };
 
 char *entity_type_name[] = {
-#define ENTITY(name, _width, _height) #name ,
-ENTITIES
-#undef ENTITY
+	#define ENTITY(name, _width, _height, _flags) #name,
+	ENTITIES
+	#undef ENTITY
+};
+
+enum entity_flags entity_flags[] = {
+	#define ENTITY(_name, _width, _height, flags) flags,
+	ENTITIES
+	#undef ENTITY
 };
 
 struct game_state {
@@ -144,7 +156,8 @@ PATH_CALCULATE;
 #define GET_FREE_DIJKSTRA_MAP u32 get_free_dijkstra_map(struct dijkstra_maps *maps)
 GET_FREE_DIJKSTRA_MAP;
 
-#define GAME_ADD_ENTITY void game_add_entity(struct game_state *game_state, struct entity *entity)
+#define GAME_ADD_ENTITY \
+	void game_add_entity(struct game_state *game_state, enum entity_type entity_type, v2_u8 pos)
 GAME_ADD_ENTITY;
 
 #define GAME_ENTITY_BY_ID struct entity *game_entity_by_id(struct game_state *game_state, u32 id)

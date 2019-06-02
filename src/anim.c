@@ -37,7 +37,6 @@ DRAW_ANIM_STATE {
 			break;
 		case ENTITY_ANIM_MOVING: {
 			f32 dt = (time - p->moving.start_time) / MOVE_TIME;
-			SDL_Log("%f", dt);
 			if (dt < 1) {
 				v2 s = p->moving.start_pos, e = p->moving.end_pos;
 				f32 jump = dt*(1.0f - dt);

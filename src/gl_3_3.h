@@ -133,4 +133,5 @@ typedef i32 GLintptr;
 	GL_FUNC(void,   glTexImage2D,              GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *data) \
 	GL_FUNC(void,   glTexParameteri,           GLenum target, GLenum pname, GLint param) \
 	GL_FUNC(void,   glActiveTexture,           GLenum texture) \
+	GL_FUNC(void,   glLineWidth,               GLfloat width) \
 	/* end function list */

@@ -10,6 +10,7 @@
 #include "draw.h"
 #include "anim.h"
 #include "game_state.h"
+#include "ui.h"
 
 // GLOBAL VARIABLES
 #define GL_FUNC(return_type, name, ...) return_type (*name)(__VA_ARGS__) = NULL;
@@ -102,8 +103,8 @@ GL_3_3_FUNCTIONS
 	map_generate(&game_state.map, 200, 200);
 	map_create_anim_state(&game_state.map, &anim_state);
 
-	f32 zoom = 2.0f;
-	v2 map_center = { .x = 0.0f, .y = 0.0f };
+	struct ui_state ui_state = { 0 };
+	ui_state.zoom = 2.0f;
 
 	// add troops to map
 	{
@@ -133,30 +134,23 @@ GL_3_3_FUNCTIONS
 			return FALSE;
 		}
 		v2_u8 fort_pos, dim;
-		enum entity_type entity_type = ENTITY_TYPE_FORT;
-		dim = entity_dimensions[entity_type];
+		dim = entity_dimensions[ENTITY_TYPE_FORT];
 		dim.w += 2; dim.h += 2;
 		do {
 			fort_pos.x = rand() % (game_state.map.width  - dim.w);
 			fort_pos.y = rand() % (game_state.map.height - dim.h);
 		} while (is_blocked(fort_pos, dim));
 		++fort_pos.x; ++fort_pos.y;
-		struct entity entity = {
-			.type = ENTITY_TYPE_FORT,
-			.pos = fort_pos,
-		};
-		map_center = (v2) { .x = fort_pos.x, .y = fort_pos.y };
-		game_add_entity(&game_state, &entity);
+		ui_state.map_center = (v2) { .x = fort_pos.x, .y = fort_pos.y };
+		game_add_entity(&game_state, ENTITY_TYPE_FORT, fort_pos);
 		for (u32 i = 0; i < 3; ++i) {
 			v2_u8 pos;
-			dim.w = 1; dim.h = 1;
+			dim = entity_dimensions[ENTITY_TYPE_MAN];
 			do {
 				pos.x = fort_pos.x + (rand() % 11) - 5;
 				pos.y = fort_pos.y + (rand() % 11) - 5;
 			} while(is_blocked(pos, dim));
-			entity.type = ENTITY_TYPE_MAN;
-			entity.pos = pos;
-			game_add_entity(&game_state, &entity);
+			game_add_entity(&game_state, ENTITY_TYPE_MAN, pos);
 		}
 	}
 
@@ -166,113 +160,24 @@ GL_3_3_FUNCTIONS
 
 	glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 
-#define MAX_SELECTED_ENTITIES 16
-	struct  {
-		u32 num_selected_entities;
-		u32 selected_entities[MAX_SELECTED_ENTITIES];
-	} selected_entities;
-	selected_entities.num_selected_entities = 0;
-
 	while (1) {
-		v2_i32 screen_size = { .w = SCREEN_WIDTH, .h = SCREEN_HEIGHT };
-		v2_i32 mouse_screen_pos;
-		SDL_GetMouseState(&mouse_screen_pos.x, &mouse_screen_pos.y);
-		v2 mouse_world_pos = {
-			.x = (mouse_screen_pos.x - screen_size.w/2)     / (zoom * 16.0f) + map_center.x,
-			.y = (screen_size.h/2 - mouse_screen_pos.y - 1) / (zoom * 16.0f) + map_center.y,
-		};
-		u32 mouse_over_entity = entity_by_mouse_pos(&anim_state, mouse_world_pos);
-
-		SDL_Event e;
-		while (SDL_PollEvent(&e)) {
-			switch (e.type) {
-			case SDL_QUIT:
-				return EXIT_SUCCESS;
-			case SDL_KEYDOWN:
-				switch (e.key.keysym.sym) {
-				case SDLK_q:
-					return EXIT_SUCCESS;
-				}
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				switch (e.button.button) {
-				case SDL_BUTTON_MIDDLE:
-					SDL_SetRelativeMouseMode(SDL_TRUE);
-					break;
-				case SDL_BUTTON_LEFT:
-					if (mouse_over_entity != NO_ENTITY) {
-						selected_entities.num_selected_entities = 1;
-						selected_entities.selected_entities[0]
-							= mouse_over_entity;
-					} else {
-						selected_entities.num_selected_entities = 0;
-					}
-					break;
-				case SDL_BUTTON_RIGHT:
-					if (selected_entities.num_selected_entities) {
-						u32 dm_idx = get_free_dijkstra_map(&dijkstra_maps);
-						dijkstra_maps.maps[dm_idx].objective = OBJECTIVE_PURSUE;
-						dijkstra_maps.maps[dm_idx].goal = (v2_u8) {
-							.x = (u8)mouse_world_pos.x,
-							.y = (u8)mouse_world_pos.y,
-						};
-						path_calculate(&dijkstra_maps.maps[dm_idx], &game_state);
-
-						for (u32 i = 0;
-						     i < selected_entities.num_selected_entities;
-						     ++i) {
-							struct entity *e = game_entity_by_id(&game_state,
-								selected_entities.selected_entities[i]);
-							e->cur_command.type = COMMAND_MOVE;
-							e->cur_command.move.dijkstra_map = dm_idx;
-							++dijkstra_maps.reference_counts[dm_idx];
-						}
-
-					}
-					break;
-				}
-				break;
-			case SDL_MOUSEBUTTONUP:
-				switch (e.button.button) {
-				case SDL_BUTTON_MIDDLE:
-					SDL_SetRelativeMouseMode(SDL_FALSE);
-					break;
-				}
-				break;
-			case SDL_MOUSEMOTION:
-				if (e.motion.state & SDL_BUTTON_MMASK) {
-					map_center.x -= ((f32)e.motion.xrel) / (zoom * 16.0f);
-					map_center.y += ((f32)e.motion.yrel) / (zoom * 16.0f);
-				}
-				break;
-			case SDL_MOUSEWHEEL:
-				#define WHEEL_SCALE_FACTOR 10.0f
-				if (e.wheel.y > 0) {
-					zoom = MIN(zoom + 1.0f, 4.0f);
-				} else {
-					zoom = MAX(zoom - 1.0f, 1.0f);
-				}
-				break;
-			}
+		if (process_input(&ui_state, &game_state, &anim_state, &dijkstra_maps)) {
+			return EXIT_SUCCESS;
 		}
-		map_center.x = CLAMP(map_center.x,
-			screen_size.w / (2.0f * zoom * 16.0f),
-			game_state.map.width - screen_size.w / (2.0f * zoom * 16.0f));
-		map_center.y = CLAMP(map_center.y,
-			screen_size.h / (2.0f * zoom * 16.0f),
-			game_state.map.width - screen_size.h / (2.0f * zoom * 16.0f));
+
 		draw_reset(&draw_data);
-		draw_set_zoom(&draw_data, zoom);
-		draw_update_map_center(&draw_data, map_center);
+		draw_set_zoom(&draw_data, ui_state.zoom);
+		draw_update_map_center(&draw_data, ui_state.map_center);
 
 		f32 time = ((f32)SDL_GetTicks()) / 1000.0f;
 		game_update(&game_state, &dijkstra_maps, &anim_state, time);
 		draw_anim_state(&anim_state, &draw_data, time);
 
-		if (mouse_over_entity != NO_ENTITY) {
-			struct entity *e = game_entity_by_id(&game_state, mouse_over_entity);
-			v2_u8 dim = entity_dimensions[e->type];
-			v2_u8 pos = e->pos;
+		if (ui_state.mouse_over_entity != NO_ENTITY) {
+			struct entity_anim *e = get_entity_anim_by_id(
+				&anim_state, ui_state.mouse_over_entity);
+			v2 pos = e->pos;
+			v2 dim = e->dim;
 			v2 bl = { .x =         pos.x, .y =         pos.y };
 			v2 br = { .x = pos.x + dim.w, .y =         pos.y };
 			v2 tl = { .x =         pos.x, .y = pos.y + dim.h };
@@ -284,9 +189,9 @@ GL_3_3_FUNCTIONS
 			draw_add_line(&draw_data, tl, bl, color);
 		}
 
-		if (selected_entities.num_selected_entities) {
-			for (u32 i = 0; i < selected_entities.num_selected_entities; ++i) {
-				u32 id = selected_entities.selected_entities[i];
+		if (ui_state.num_selected_entities) {
+			for (u32 i = 0; i < ui_state.num_selected_entities; ++i) {
+				u32 id = ui_state.selected_entities[i];
 				struct entity_anim *e = get_entity_anim_by_id(&anim_state, id);
 				v2 pos = e->pos;
 				v2 dim = e->dim;
@@ -302,6 +207,24 @@ GL_3_3_FUNCTIONS
 			}
 		}
 
+		switch (ui_state.state) {
+		case UI_STATE_DRAGGING_SELECTION: {
+				v2 s = ui_state.selecting.start_pos, e = ui_state.selecting.end_pos;
+				v2 bl = { .x = MIN(s.x, e.x), .y = MIN(s.y, e.y) };
+				v2 tr = { .x = MAX(s.x, e.x), .y = MAX(s.y, e.y) };
+				v2 br = { .x = tr.x, .y = bl.y };
+				v2 tl = { .x = bl.x, .y = tr.y };
+				v3 color = { .r = 0.0f, .g = 1.0f, .b = 0.0f };
+				draw_add_line(&draw_data, bl, br, color);
+				draw_add_line(&draw_data, br, tr, color);
+				draw_add_line(&draw_data, tr, tl, color);
+				draw_add_line(&draw_data, tl, bl, color);
+			} break;
+		}
+
+		draw_add_string(&draw_data, ui_state_names[ui_state.state], (v2) { .x=0.0f, .y=0.0f },
+			(v3) { .r=1.0f, .g=0.0f, .b=0.0f });
+
 		glClear(GL_COLOR_BUFFER_BIT);
 		draw_tiles(&draw_data);
 		draw_lines(&draw_data);
@@ -316,3 +239,4 @@ GL_3_3_FUNCTIONS
 #include "draw.c"
 #include "anim.c"
 #include "game_state.c"
+#include "ui.c"
