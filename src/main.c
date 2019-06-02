@@ -9,10 +9,7 @@
 #include "assets.h"
 #include "draw.h"
 #include "anim.h"
-#include "map.h"
-#include "entity.h"
 #include "game_state.h"
-#include "path.h"
 
 // GLOBAL VARIABLES
 #define GL_FUNC(return_type, name, ...) return_type (*name)(__VA_ARGS__) = NULL;
@@ -184,7 +181,7 @@ GL_3_3_FUNCTIONS
 			.x = (mouse_screen_pos.x - screen_size.w/2)     / (zoom * 16.0f) + map_center.x,
 			.y = (screen_size.h/2 - mouse_screen_pos.y - 1) / (zoom * 16.0f) + map_center.y,
 		};
-		u32 mouse_over_entity = game_get_entity_by_mouse(&game_state, mouse_world_pos);
+		u32 mouse_over_entity = entity_by_mouse_pos(&anim_state, mouse_world_pos);
 
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
@@ -269,6 +266,7 @@ GL_3_3_FUNCTIONS
 		draw_update_map_center(&draw_data, map_center);
 
 		f32 time = ((f32)SDL_GetTicks()) / 1000.0f;
+		game_update(&game_state, &dijkstra_maps, &anim_state, time);
 		draw_anim_state(&anim_state, &draw_data, time);
 
 		if (mouse_over_entity != NO_ENTITY) {
@@ -289,9 +287,9 @@ GL_3_3_FUNCTIONS
 		if (selected_entities.num_selected_entities) {
 			for (u32 i = 0; i < selected_entities.num_selected_entities; ++i) {
 				u32 id = selected_entities.selected_entities[i];
-				struct entity *e = game_entity_by_id(&game_state, id);
-				v2_u8 dim = entity_dimensions[e->type];
-				v2_u8 pos = e->pos;
+				struct entity_anim *e = get_entity_anim_by_id(&anim_state, id);
+				v2 pos = e->pos;
+				v2 dim = e->dim;
 				v2 bl = { .x =         pos.x, .y =         pos.y };
 				v2 br = { .x = pos.x + dim.w, .y =         pos.y };
 				v2 tl = { .x =         pos.x, .y = pos.y + dim.h };
@@ -317,7 +315,4 @@ GL_3_3_FUNCTIONS
 #include "assets.c"
 #include "draw.c"
 #include "anim.c"
-#include "map.c"
-#include "entity.c"
 #include "game_state.c"
-#include "path.c"

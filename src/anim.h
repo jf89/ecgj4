@@ -131,13 +131,21 @@ struct entity_anim {
 	enum {
 		ENTITY_ANIM_NONE,
 		ENTITY_ANIM_BOBBING,
+		ENTITY_ANIM_MOVING,
 	} type;
+	u32 id;
 	enum sprite sprite;
 	v2 pos;
+	v2 dim;
 	union {
 		struct {
 			f32 time;
 		} bobbing;
+		struct {
+			v2 start_pos;
+			v2 end_pos;
+			f32 start_time;
+		} moving;
 	};
 };
 
@@ -153,3 +161,11 @@ struct anim_state {
 #define DRAW_ANIM_STATE \
 	void draw_anim_state(struct anim_state *anim_state, struct draw_data *draw_data, f32 time)
 DRAW_ANIM_STATE;
+
+#define GET_ENTITY_ANIM_BY_ID \
+	struct entity_anim *get_entity_anim_by_id(struct anim_state *anim_state, u32 id)
+GET_ENTITY_ANIM_BY_ID;
+
+#define ENTITY_BY_MOUSE_POS \
+	u32 entity_by_mouse_pos(struct anim_state *anim_state, v2 mouse_pos)
+ENTITY_BY_MOUSE_POS;
